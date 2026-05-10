@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>口袋證券 - 廣告成效報告</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  background: #FAFAF7;
+  color: #1F1E1D;
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  background: #FFFFFF;
+  min-height: 100vh;
+  border-left: 0.5px solid #E5E3DD;
+  border-right: 0.5px solid #E5E3DD;
+}
+
+.header {
+  background: #F1EFE8;
+  padding: 16px 28px;
+  border-bottom: 0.5px solid #E5E3DD;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header h1 { font-size: 16px; font-weight: 500; }
+.header .meta { font-size: 11px; color: #888780; margin-top: 2px; }
+.header .org { font-size: 11px; color: #888780; }
+
+.tabs {
+  display: flex;
+  padding: 0 28px;
+  border-bottom: 0.5px solid #E5E3DD;
+  background: #FFFFFF;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.tab {
+  padding: 14px 20px;
+  font-size: 13px;
+  color: #888780;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  user-select: none;
+}
+.tab:hover { color: #1F1E1D; }
+.tab.active {
+  color: #534AB7;
+  font-weight: 500;
+  border-bottom-color: #534AB7;
+}
+
+.page { padding: 24px 28px; display: none; }
+.page.active { display: block; }
+
+.section-label {
+  font-size: 13px;
+  color: #6E6C66;
+  font-weight: 500;
+  margin: 0 0 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 28px;
+}
+thead tr { border-bottom: 0.5px solid #C7C5BE; color: #6E6C66; font-size: 11px; }
+thead th { text-align: left; padding: 10px 8px; font-weight: 400; }
+thead th.right { text-align: right; }
+thead th.center { text-align: center; }
+tbody tr { border-bottom: 0.5px solid #E5E3DD; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr.highlight { background: #F1EFE8; font-weight: 500; }
+tbody td { padding: 12px 8px; vertical-align: middle; }
+tbody td.right { text-align: right; }
+tbody td.center { text-align: center; }
+tbody td.bold { font-weight: 500; }
+
+.cpa-pass { background: #E1F5EE; color: #0F6E56; font-weight: 500; }
+.cpa-fail { background: #FCEBEB; color: #A32D2D; font-weight: 500; }
+.text-success { color: #0F6E56; }
+.text-danger { color: #A32D2D; }
+.text-tertiary { color: #888780; }
+
+.badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+.badge-pass { color: #0F6E56; background: #E1F5EE; }
+.badge-fail { color: #A32D2D; background: #FCEBEB; }
+
+.budget-section {
+  background: #F1EFE8;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+}
+.budget-section .legend { font-size: 11px; color: #888780; margin-bottom: 14px; }
+.budget-row { margin-bottom: 16px; }
+.budget-row:last-child { margin-bottom: 0; }
+.budget-row-header {
+  display: flex; justify-content: space-between;
+  font-size: 12px; margin-bottom: 6px;
+}
+.budget-row-header .name { font-weight: 500; }
+.budget-row-header .desc { color: #6E6C66; }
+.budget-bar {
+  position: relative; background: #FFFFFF;
+  border-radius: 2px; height: 10px;
+}
+.budget-bar-fill { background: #534AB7; height: 100%; border-radius: 2px; transition: width 0.3s; }
+.budget-bar-marker { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #1F1E1D; }
+
+.summary-box { background: #F1EFE8; border-radius: 8px; padding: 14px 18px; }
+.summary-box .title { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.summary-box ul { padding-left: 18px; font-size: 12px; color: #6E6C66; line-height: 1.7; }
+
+.loading, .error {
+  padding: 40px 28px;
+  text-align: center;
+  font-size: 13px;
+}
+.loading { color: #888780; }
+.error { color: #A32D2D; background: #FCEBEB; margin: 20px 28px; border-radius: 8px; padding: 24px; text-align: left; }
+.error code { background: #FFF; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+
+@media (max-width: 768px) {
+  .container { border: none; }
+  .header, .tabs, .page { padding-left: 16px; padding-right: 16px; }
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tab { padding: 12px 14px; font-size: 12px; white-space: nowrap; }
+  table { font-size: 11px; }
+  thead th, tbody td { padding: 8px 5px; }
+  .budget-section, .summary-box { padding: 12px 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div>
+      <h1>廣告成效報告</h1>
+      <div class="meta" id="last-update">資料載入中...</div>
+    </div>
+    <div class="org">口袋證券 · 行銷企劃</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">總覽</div>
+    <div class="tab" data-tab="asa">ASA</div>
+    <div class="tab" data-tab="pmax">PMax</div>
+    <div class="tab" data-tab="kw">KW</div>
+  </div>
+
+  <div id="loading" class="loading">資料載入中...</div>
+  <div id="error" class="error" style="display:none;"></div>
+
+  <div id="page-overview" class="page" style="display:none;"></div>
+  <div id="page-asa" class="page" style="display:none;"></div>
+  <div id="page-pmax" class="page" style="display:none;"></div>
+  <div id="page-kw" class="page" style="display:none;"></div>
+
+</div>
+
+<script>
+const DATA_FILE = 'ad-data.xlsx';
+
+const CPA_TARGETS = {
+  ASA: 350,
+  PMAX: 500,
+  KW: 500,
+  整體: 500,
+};
+
+function parseNum(str) {
+  if (str === null || str === undefined || str === '') return 0;
+  if (typeof str === 'number') return str;
+  const s = String(str).replace(/NT\$/g, '').replace(/\$/g, '').replace(/,/g, '').replace(/%/g, '').trim();
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function parsePct(str) {
+  if (str === null || str === undefined || str === '') return 0;
+  if (typeof str === 'number') {
+    return str > 1 ? str / 100 : str;
+  }
+  const s = String(str).replace(/%/g, '').trim();
+  const n = parseFloat(s);
+  if (isNaN(n)) return 0;
+  if (String(str).includes('%') || n > 1) return n / 100;
+  return n;
+}
+
+function fmtNum(n) {
+  if (!n && n !== 0) return '-';
+  return new Intl.NumberFormat('zh-TW').format(Math.round(n));
+}
+function fmtMoney(n) {
+  if (!n && n !== 0) return '-';
+  return '$' + fmtNum(n);
+}
+function fmtMoneyShort(n) {
+  if (!n && n !== 0) return '-';
+  if (n >= 1000) return '$' + Math.round(n / 1000) + 'K';
+  return '$' + fmtNum(n);
+}
+function fmtPct(n, decimals = 1) {
+  if (!n && n !== 0) return '-';
+  return (n * 100).toFixed(decimals) + '%';
+}
+
+let DATA = {};
+
+async function loadData() {
+  try {
+    const response = await fetch(DATA_FILE);
+    if (!response.ok) throw new Error(`找不到檔案 ${DATA_FILE}（HTTP ${response.status}）`);
+    const buffer = await response.arrayBuffer();
+    const wb = XLSX.read(buffer, { type: 'array', cellDates: true });
+
+    const budget = sheetToObjects(wb.Sheets['預算管理']);
+    const asaRaw = sheetToObjects(wb.Sheets['ASA RAWATA']);
+    const asaConv = sheetToObjects(wb.Sheets['ASA每日進件數']);
+    const pmax = sheetToObjects(wb.Sheets['PMAX RAWATA']);
+    const kw = sheetToObjects(wb.Sheets['KW RAWATA']);
+
+    processData({ budget, asaRaw, asaConv, pmax, kw });
+
+    document.getElementById('loading').style.display = 'none';
+    const updateTime = new Date().toLocaleString('zh-TW', { hour12: false });
+    document.getElementById('last-update').textContent = `資料更新：${updateTime}`;
+    renderAll();
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('error').innerHTML =
+      `<strong>資料載入失敗</strong><br><br>${err.message}<br><br>` +
+      `請確認 <code>${DATA_FILE}</code> 跟 index.html 在同一個資料夾裡。`;
+    console.error(err);
+  }
+}
+
+function sheetToObjects(sheet) {
+  if (!sheet) return [];
+  return XLSX.utils.sheet_to_json(sheet, { defval: '' });
+}
+
+function processData({ budget, asaRaw, asaConv, pmax, kw }) {
+  const budgetMap = {};
+  budget.forEach(row => {
+    const channel = row['廣告活動'];
+    if (!channel) return;
+    budgetMap[channel] = {
+      budget: parseNum(row['預算']),
+      spend: parseNum(row['花費']),
+      usedRatio: parsePct(row['已用比例']),
+      shouldRatio: parsePct(row['應花比例']),
+      targetConv: parseNum(row['目標進件數']),
+      targetCPA: parseNum(row['目標進件成本']),
+      actualConv: parseNum(row['實際進件數']),
+      actualCPA: parseNum(row['實際進件成本']),
+      status: row['達標'],
+    };
+  });
+
+  let asaSpend = 0, asaImp = 0, asaClick = 0, asaDownload = 0;
+  asaRaw.forEach(row => {
+    asaSpend += parseNum(row['花費']);
+    asaImp += parseNum(row['曝光']);
+    asaClick += parseNum(row['點擊']);
+    asaDownload += parseNum(row['下載']);
+  });
+
+  let asaConvTotal = 0, asaCompleteTotal = 0;
+  let asaConvTW = 0, asaCompleteTW = 0;
+  let asaConvUS = 0, asaCompleteUS = 0;
+  asaConv.forEach(row => {
+    const tw = parseNum(row['台股進件']);
+    const twC = parseNum(row['台股完開']);
+    const us = parseNum(row['美股進件']);
+    const usC = parseNum(row['美股完開']);
+    asaConvTW += tw; asaCompleteTW += twC;
+    asaConvUS += us; asaCompleteUS += usC;
+    asaConvTotal += tw + us;
+    asaCompleteTotal += twC + usC;
+  });
+
+  let pmaxSpend = 0, pmaxImp = 0, pmaxClick = 0, pmaxConv = 0, pmaxComplete = 0;
+  pmax.forEach(row => {
+    pmaxSpend += parseNum(row['花費']);
+    pmaxImp += parseNum(row['曝光']);
+    pmaxClick += parseNum(row['點擊']);
+    pmaxConv += parseNum(row['進件']);
+    pmaxComplete += parseNum(row['完開']);
+  });
+
+  let kwSpend = 0, kwImp = 0, kwClick = 0, kwConv = 0, kwComplete = 0;
+  const kwByCampaign = {};
+  kw.forEach(row => {
+    const camp = row['廣告活動'] || '';
+    const spend = parseNum(row['花費']);
+    const imp = parseNum(row['曝光']);
+    const click = parseNum(row['點擊']);
+    const conv = parseNum(row['進件']);
+    const complete = parseNum(row['完開']);
+
+    kwSpend += spend;
+    kwImp += imp;
+    kwClick += click;
+    kwConv += conv;
+    kwComplete += complete;
+
+    let campShort = camp;
+    if (camp.includes('郵局')) campShort = '郵局字';
+    else if (camp.includes('品牌')) campShort = '品牌字';
+    else if (camp.includes('投資')) campShort = '投資入門字';
+
+    if (!kwByCampaign[campShort]) {
+      kwByCampaign[campShort] = { spend: 0, imp: 0, click: 0, conv: 0, complete: 0 };
+    }
+    kwByCampaign[campShort].spend += spend;
+    kwByCampaign[campShort].imp += imp;
+    kwByCampaign[campShort].click += click;
+    kwByCampaign[campShort].conv += conv;
+    kwByCampaign[campShort].complete += complete;
+  });
+
+  const totalSpend = asaSpend + pmaxSpend + kwSpend;
+  const totalConv = asaConvTotal + pmaxConv + kwConv;
+  const totalComplete = asaCompleteTotal + pmaxComplete + kwComplete;
+  const totalBudget = (budgetMap.ASA?.budget || 0) + (budgetMap.PMAX?.budget || 0) + (budgetMap.KW?.budget || 0);
+
+  DATA = {
+    budget: budgetMap,
+    asa: {
+      spend: asaSpend, impression: asaImp, click: asaClick, download: asaDownload,
+      conv: asaConvTotal, complete: asaCompleteTotal,
+      cpa: asaConvTotal ? asaSpend / asaConvTotal : 0,
+      completeRate: asaConvTotal ? asaCompleteTotal / asaConvTotal : 0,
+      tw: { conv: asaConvTW, complete: asaCompleteTW },
+      us: { conv: asaConvUS, complete: asaCompleteUS },
+      rawByCampaign: asaRaw,
+    },
+    pmax: {
+      spend: pmaxSpend, impression: pmaxImp, click: pmaxClick,
+      conv: pmaxConv, complete: pmaxComplete,
+      cpa: pmaxConv ? pmaxSpend / pmaxConv : 0,
+      completeRate: pmaxConv ? pmaxComplete / pmaxConv : 0,
+      rawDaily: pmax,
+    },
+    kw: {
+      spend: kwSpend, impression: kwImp, click: kwClick,
+      conv: kwConv, complete: kwComplete,
+      cpa: kwConv ? kwSpend / kwConv : 0,
+      completeRate: kwConv ? kwComplete / kwConv : 0,
+      byCampaign: kwByCampaign,
+      rawDaily: kw,
+    },
+    total: {
+      spend: totalSpend, budget: totalBudget,
+      usedRatio: totalBudget ? totalSpend / totalBudget : 0,
+      shouldRatio: budgetMap.ASA?.shouldRatio || budgetMap.KW?.shouldRatio || budgetMap.PMAX?.shouldRatio || 0,
+      conv: totalConv, complete: totalComplete,
+      cpa: totalConv ? totalSpend / totalConv : 0,
+      completeRate: totalConv ? totalComplete / totalConv : 0,
+    },
+  };
+}
+
+function renderAll() {
+  renderOverview();
+  renderASA();
+  renderPMax();
+  renderKW();
+  document.getElementById('page-overview').style.display = 'block';
+}
+
+function channelRow(name, spend, conv, cpa, complete, completeRate, completeCPA, target, isTotal) {
+  const cpaCls = cpa <= target && cpa > 0 ? 'cpa-pass' : (cpa > target ? 'cpa-fail' : '');
+  const completeRateCls = completeRate >= 0.5 ? 'text-success' : 'text-danger';
+  const statusBadge = (cpa > 0 && cpa <= target)
+    ? '<span class="badge badge-pass">達標</span>'
+    : (cpa > target ? '<span class="badge badge-fail">超標</span>' : '<span class="text-tertiary">-</span>');
+  return `
+    <tr ${isTotal ? 'class="highlight"' : ''}>
+      <td class="bold">${name}</td>
+      <td class="right">${fmtMoney(spend)}</td>
+      <td class="right">${fmtNum(conv)}</td>
+      <td class="right ${cpaCls}">${cpa > 0 ? fmtMoney(cpa) : '-'}</td>
+      <td class="right text-tertiary">${fmtMoney(target)}</td>
+      <td class="right">${fmtNum(complete)}</td>
+      <td class="right ${completeRateCls}">${fmtPct(completeRate, 0)}</td>
+      <td class="right">${completeCPA ? fmtMoney(completeCPA) : '-'}</td>
+      <td class="center">${statusBadge}</td>
+    </tr>
+  `;
+}
+
+function renderOverview() {
+  const t = DATA.total;
+  const html = `
+    <p class="section-label">▌ 渠道成效</p>
+    <table>
+      <thead>
+        <tr>
+          <th>渠道</th>
+          <th class="right">花費</th>
+          <th class="right">進件</th>
+          <th class="right">CPA</th>
+          <th class="right">目標 CPA</th>
+          <th class="right">完開</th>
+          <th class="right">完開率</th>
+          <th class="right">完開 CPA</th>
+          <th class="center">達標</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${channelRow('整體', t.spend, t.conv, t.cpa, t.complete, t.completeRate, t.complete ? t.spend / t.complete : 0, CPA_TARGETS.整體, true)}
+        ${channelRow('ASA', DATA.asa.spend, DATA.asa.conv, DATA.asa.cpa, DATA.asa.complete, DATA.asa.completeRate, DATA.asa.complete ? DATA.asa.spend / DATA.asa.complete : 0, CPA_TARGETS.ASA, false)}
+        ${channelRow('PMax', DATA.pmax.spend, DATA.pmax.conv, DATA.pmax.cpa, DATA.pmax.complete, DATA.pmax.completeRate, DATA.pmax.complete ? DATA.pmax.spend / DATA.pmax.complete : 0, CPA_TARGETS.PMAX, false)}
+        ${channelRow('KW', DATA.kw.spend, DATA.kw.conv, DATA.kw.cpa, DATA.kw.complete, DATA.kw.completeRate, DATA.kw.complete ? DATA.kw.spend / DATA.kw.complete : 0, CPA_TARGETS.KW, false)}
+      </tbody>
+    </table>
+
+    <p class="section-label">▌ 預算使用</p>
+    <div class="budget-section">
+      <div class="legend">紫=已花 · 黑線=應花到今天 ${fmtPct(t.shouldRatio, 1)}</div>
+      ${budgetRow('整體', t.spend, t.budget, t.usedRatio, t.shouldRatio)}
+      ${budgetRow('ASA', DATA.budget.ASA?.spend, DATA.budget.ASA?.budget, DATA.budget.ASA?.usedRatio, DATA.budget.ASA?.shouldRatio)}
+      ${budgetRow('PMax', DATA.budget.PMAX?.spend, DATA.budget.PMAX?.budget, DATA.budget.PMAX?.usedRatio, DATA.budget.PMAX?.shouldRatio)}
+      ${budgetRow('KW', DATA.budget.KW?.spend, DATA.budget.KW?.budget, DATA.budget.KW?.usedRatio, DATA.budget.KW?.shouldRatio)}
+    </div>
+
+    <div class="summary-box">
+      <div class="title">▌ 本期重點</div>
+      <ul>
+        <li>整體進件 ${fmtNum(t.conv)} 件，CPA ${fmtMoney(t.cpa)}（目標 ${fmtMoney(CPA_TARGETS.整體)}）${t.cpa <= CPA_TARGETS.整體 ? '<span class="text-success">✓ 達標</span>' : '<span class="text-danger">✗ 超標</span>'}</li>
+        <li>三渠道 CPA：ASA ${fmtMoney(DATA.asa.cpa)} / PMax ${fmtMoney(DATA.pmax.cpa)} / KW ${fmtMoney(DATA.kw.cpa)}</li>
+        <li>整體預算用 ${fmtPct(t.usedRatio, 1)}，應用 ${fmtPct(t.shouldRatio, 1)}${t.usedRatio < t.shouldRatio ? ` — 進度落後 ${fmtPct(t.shouldRatio - t.usedRatio, 1)}` : ` — 進度超前 ${fmtPct(t.usedRatio - t.shouldRatio, 1)}`}</li>
+      </ul>
+    </div>
+  `;
+  document.getElementById('page-overview').innerHTML = html;
+}
+
+function budgetRow(name, spend, budget, usedRatio, shouldRatio) {
+  const usedPct = usedRatio || 0;
+  const shouldPct = shouldRatio || 0;
+  const fillWidth = Math.min(usedPct * 100, 100);
+  const markerLeft = Math.min(shouldPct * 100, 100);
+  return `
+    <div class="budget-row">
+      <div class="budget-row-header">
+        <span class="name">${name}</span>
+        <span class="desc">${fmtMoneyShort(spend)} / ${fmtMoneyShort(budget)} · ${fmtPct(usedPct, 1)}</span>
+      </div>
+      <div class="budget-bar">
+        <div class="budget-bar-fill" style="width: ${fillWidth}%"></div>
+        <div class="budget-bar-marker" style="left: ${markerLeft}%"></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderASA() {
+  const a = DATA.asa;
+  const target = CPA_TARGETS.ASA;
+  const cpaCls = a.cpa <= target && a.cpa > 0 ? 'cpa-pass' : (a.cpa > target ? 'cpa-fail' : '');
+
+  const campMap = {};
+  a.rawByCampaign.forEach(row => {
+    const camp = row['廣告活動'] || '';
+    if (!camp) return;
+    if (!campMap[camp]) campMap[camp] = { imp: 0, click: 0, download: 0, spend: 0 };
+    campMap[camp].imp += parseNum(row['曝光']);
+    campMap[camp].click += parseNum(row['點擊']);
+    campMap[camp].download += parseNum(row['下載']);
+    campMap[camp].spend += parseNum(row['花費']);
+  });
+
+  const campRows = Object.entries(campMap).map(([camp, d]) => {
+    const market = camp.includes('美股') ? '美股' : '台股';
+    const ctr = d.imp ? d.click / d.imp : 0;
+    return `
+      <tr>
+        <td>${camp}</td>
+        <td>${market}</td>
+        <td class="right">${fmtNum(d.imp)}</td>
+        <td class="right">${fmtNum(d.click)}</td>
+        <td class="right">${fmtPct(ctr, 1)}</td>
+        <td class="right">${fmtNum(d.download)}</td>
+        <td class="right">${fmtMoney(d.spend)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <p class="section-label">▌ ASA 渠道整體</p>
+    <table>
+      <thead><tr>
+        <th>項目</th>
+        <th class="right">花費</th>
+        <th class="right">進件</th>
+        <th class="right">CPA</th>
+        <th class="right">目標 CPA</th>
+        <th class="right">完開</th>
+        <th class="right">完開率</th>
+      </tr></thead>
+      <tbody>
+        <tr class="highlight">
+          <td class="bold">ASA 合計</td>
+          <td class="right">${fmtMoney(a.spend)}</td>
+          <td class="right">${fmtNum(a.conv)}</td>
+          <td class="right ${cpaCls}">${a.cpa > 0 ? fmtMoney(a.cpa) : '-'}</td>
+          <td class="right text-tertiary">${fmtMoney(target)}</td>
+          <td class="right">${fmtNum(a.complete)}</td>
+          <td class="right">${fmtPct(a.completeRate, 0)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="section-label">▌ 台股 vs 美股（進件）</p>
+    <table>
+      <thead><tr>
+        <th>市場</th>
+        <th class="right">進件</th>
+        <th class="right">完開</th>
+        <th class="right">完開率</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td class="bold">台股</td>
+          <td class="right">${fmtNum(a.tw.conv)}</td>
+          <td class="right">${fmtNum(a.tw.complete)}</td>
+          <td class="right">${fmtPct(a.tw.conv ? a.tw.complete / a.tw.conv : 0, 0)}</td>
+        </tr>
+        <tr>
+          <td class="bold">美股</td>
+          <td class="right">${fmtNum(a.us.conv)}</td>
+          <td class="right">${fmtNum(a.us.complete)}</td>
+          <td class="right">${fmtPct(a.us.conv ? a.us.complete / a.us.conv : 0, 0)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="section-label">▌ 廣告活動明細（不含進件 / CPA，因 ASA 進件僅以市場別歸因）</p>
+    <table>
+      <thead><tr>
+        <th>廣告活動</th>
+        <th>市場</th>
+        <th class="right">曝光</th>
+        <th class="right">點擊</th>
+        <th class="right">點擊率</th>
+        <th class="right">下載</th>
+        <th class="right">花費</th>
+      </tr></thead>
+      <tbody>${campRows}</tbody>
+    </table>
+  `;
+  document.getElementById('page-asa').innerHTML = html;
+}
+
+function formatDate(d) {
+  if (d instanceof Date) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  if (typeof d === 'string') return d.split(' ')[0];
+  return String(d);
+}
+
+function renderPMax() {
+  const p = DATA.pmax;
+  const target = CPA_TARGETS.PMAX;
+  const cpaCls = p.cpa <= target && p.cpa > 0 ? 'cpa-pass' : (p.cpa > target ? 'cpa-fail' : '');
+
+  const dailyRows = p.rawDaily.map(row => {
+    const dateStr = formatDate(row['日期']);
+    const spend = parseNum(row['花費']);
+    const imp = parseNum(row['曝光']);
+    const click = parseNum(row['點擊']);
+    const conv = parseNum(row['進件']);
+    const complete = parseNum(row['完開']);
+    const cpa = conv ? spend / conv : 0;
+    const cr = conv ? complete / conv : 0;
+    const dCpaCls = cpa && cpa > target ? 'cpa-fail' : (cpa ? 'cpa-pass' : '');
+    return `
+      <tr>
+        <td>${dateStr || '-'}</td>
+        <td class="right">${fmtNum(imp)}</td>
+        <td class="right">${fmtNum(click)}</td>
+        <td class="right">${fmtMoney(spend)}</td>
+        <td class="right">${fmtNum(conv)}</td>
+        <td class="right ${dCpaCls}">${cpa ? fmtMoney(cpa) : '-'}</td>
+        <td class="right">${conv ? fmtPct(cr, 0) : '-'}</td>
+      </tr>
+    `;
+  }).reverse().join('');
+
+  const html = `
+    <p class="section-label">▌ PMax 渠道整體</p>
+    <table>
+      <thead><tr>
+        <th>項目</th>
+        <th class="right">花費</th>
+        <th class="right">進件</th>
+        <th class="right">CPA</th>
+        <th class="right">目標 CPA</th>
+        <th class="right">完開</th>
+        <th class="right">完開率</th>
+      </tr></thead>
+      <tbody>
+        <tr class="highlight">
+          <td class="bold">PMax 合計</td>
+          <td class="right">${fmtMoney(p.spend)}</td>
+          <td class="right">${fmtNum(p.conv)}</td>
+          <td class="right ${cpaCls}">${p.cpa > 0 ? fmtMoney(p.cpa) : '-'}</td>
+          <td class="right text-tertiary">${fmtMoney(target)}</td>
+          <td class="right">${fmtNum(p.complete)}</td>
+          <td class="right">${fmtPct(p.completeRate, 0)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="section-label">▌ 逐日明細</p>
+    <table>
+      <thead><tr>
+        <th>日期</th>
+        <th class="right">曝光</th>
+        <th class="right">點擊</th>
+        <th class="right">花費</th>
+        <th class="right">進件</th>
+        <th class="right">CPA</th>
+        <th class="right">完開率</th>
+      </tr></thead>
+      <tbody>${dailyRows}</tbody>
+    </table>
+  `;
+  document.getElementById('page-pmax').innerHTML = html;
+}
+
+function renderKW() {
+  const k = DATA.kw;
+  const target = CPA_TARGETS.KW;
+  const cpaCls = k.cpa <= target && k.cpa > 0 ? 'cpa-pass' : (k.cpa > target ? 'cpa-fail' : '');
+
+  const campRows = Object.entries(k.byCampaign).map(([camp, d]) => {
+    const cpa = d.conv ? d.spend / d.conv : 0;
+    const cr = d.conv ? d.complete / d.conv : 0;
+    const ctr = d.imp ? d.click / d.imp : 0;
+    const cCls = cpa && cpa > target ? 'cpa-fail' : (cpa ? 'cpa-pass' : '');
+    return `
+      <tr>
+        <td>${camp}</td>
+        <td class="right">${fmtNum(d.imp)}</td>
+        <td class="right">${fmtNum(d.click)}</td>
+        <td class="right">${fmtPct(ctr, 1)}</td>
+        <td class="right">${fmtMoney(d.spend)}</td>
+        <td class="right">${fmtNum(d.conv)}</td>
+        <td class="right ${cCls}">${cpa ? fmtMoney(cpa) : '-'}</td>
+        <td class="right">${d.conv ? fmtPct(cr, 0) : '-'}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const dailyRows = k.rawDaily.map(row => {
+    const dateStr = formatDate(row['日期']);
+    const camp = row['廣告活動'] || '';
+    let campShort = camp;
+    if (camp.includes('郵局')) campShort = '郵局字';
+    else if (camp.includes('品牌')) campShort = '品牌字';
+    else if (camp.includes('投資')) campShort = '投資入門字';
+
+    const spend = parseNum(row['花費']);
+    const conv = parseNum(row['進件']);
+    const complete = parseNum(row['完開']);
+    const cpa = conv ? spend / conv : 0;
+    const cr = conv ? complete / conv : 0;
+    const dCpaCls = cpa && cpa > target ? 'cpa-fail' : (cpa ? 'cpa-pass' : '');
+    return `
+      <tr>
+        <td>${dateStr || '-'}</td>
+        <td>${campShort}</td>
+        <td class="right">${fmtMoney(spend)}</td>
+        <td class="right">${fmtNum(conv)}</td>
+        <td class="right ${dCpaCls}">${cpa ? fmtMoney(cpa) : '-'}</td>
+        <td class="right">${conv ? fmtPct(cr, 0) : '-'}</td>
+      </tr>
+    `;
+  }).reverse().join('');
+
+  const html = `
+    <p class="section-label">▌ KW 渠道整體</p>
+    <table>
+      <thead><tr>
+        <th>項目</th>
+        <th class="right">花費</th>
+        <th class="right">進件</th>
+        <th class="right">CPA</th>
+        <th class="right">目標 CPA</th>
+        <th class="right">完開</th>
+        <th class="right">完開率</th>
+      </tr></thead>
+      <tbody>
+        <tr class="highlight">
+          <td class="bold">KW 合計</td>
+          <td class="right">${fmtMoney(k.spend)}</td>
+          <td class="right">${fmtNum(k.conv)}</td>
+          <td class="right ${cpaCls}">${k.cpa > 0 ? fmtMoney(k.cpa) : '-'}</td>
+          <td class="right text-tertiary">${fmtMoney(target)}</td>
+          <td class="right">${fmtNum(k.complete)}</td>
+          <td class="right">${fmtPct(k.completeRate, 0)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="section-label">▌ 廣告活動明細</p>
+    <table>
+      <thead><tr>
+        <th>廣告活動</th>
+        <th class="right">曝光</th>
+        <th class="right">點擊</th>
+        <th class="right">點擊率</th>
+        <th class="right">花費</th>
+        <th class="right">進件</th>
+        <th class="right">CPA</th>
+        <th class="right">完開率</th>
+      </tr></thead>
+      <tbody>${campRows}</tbody>
+    </table>
+
+    <p class="section-label">▌ 逐日明細</p>
+    <table>
+      <thead><tr>
+        <th>日期</th>
+        <th>廣告活動</th>
+        <th class="right">花費</th>
+        <th class="right">進件</th>
+        <th class="right">CPA</th>
+        <th class="right">完開率</th>
+      </tr></thead>
+      <tbody>${dailyRows}</tbody>
+    </table>
+  `;
+  document.getElementById('page-kw').innerHTML = html;
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+    document.getElementById('page-' + tab.dataset.tab).style.display = 'block';
+  });
+});
+
+loadData();
+</script>
+
+</body>
+</html>
